@@ -1,0 +1,37 @@
+jenkins:
+  systemMessage: "All configuration for this controller is done as code (JCasC)"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+      - id: "admin"
+        password: # pass ENV variable to Docker here!
+        properties:
+        - timezone:
+            timeZoneName: "Europe/Amsterdam"
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+  remotingSecurity:
+    enabled: true
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+unclassified:
+  location:
+    url: http://localhost:8080
+tool:
+  nodejs:
+    installations:
+      - name: "node"
+        home: "" #required until nodejs-1.3.4 release (JENKINS-57508)
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "16.2.0"
+                    npmPackagesRefreshHours: 48

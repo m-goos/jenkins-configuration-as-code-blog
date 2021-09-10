@@ -1,0 +1,69 @@
+# All credentials starting with ${jenkins/*} come from AWS Secrets Manager
+# To access any secrets, you'll have to store them in the Secrets Manager first..
+jenkins:
+  systemMessage: "All configuration for this controller is done as code (JCasC)"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+      - id: "admin"
+        password: "${jenkins/adminPassword}" # from AWS Secrets Manager
+        properties:
+        - timezone:
+            timeZoneName: "Europe/Amsterdam"
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+  remotingSecurity:
+    enabled: true
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+unclassified:
+  location:
+    url: https://jenkins.my-domain.nl/
+tool:
+  nodejs:
+    installations:
+      - name: "node"
+        home: ""
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "16.2.0"
+                    npmPackagesRefreshHours: 48
+jobs:
+    - script: >
+        pipelineJob("initialize-pipelines") {
+        definition {
+            cpsScm {
+                scm {
+                    git{
+                      remote {
+                        url("git@bitbucket.org:my-project/my-project_seed-jobs.git")
+                        credentials('jenkins-bitbucket-ssh')
+                      }
+                      branch("*/main")
+                    }
+                }
+            }
+          }
+        }
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: jenkins-bitbucket-ssh
+              username: jenkins-container
+              passphrase: "${jenkins/BITBUCKET_SSH_KEY_PASSPHRASE}"
+              description: "Jenkins SSH Access key for Bitbucket"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${jenkins/BITBUCKET_SSH_KEY}"
