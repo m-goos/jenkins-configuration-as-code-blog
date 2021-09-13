@@ -9,7 +9,7 @@ Now imagine configuring all of your infrastructure *as code*, but configuring th
 1. (Blog 2) Why I did not get the ‘perfect’ setup running yet..
 1. (Blog 3) Passing secrets to your Jenkins container from AWS ECS
 
-While I went through this setup for a Jenkins controller, I did not find everything to be as clear or well-documented as I would have wished. Hopefully these code snippets will clear some things up!
+While I went through this setup for a Jenkins controller, I did not find everything to be as clear or well-documented as I would have wished. Hopefully this article will clear some things up! *[Find the repository here]()*
 
 ![Stairs](images/stairs.jpg)
 
@@ -38,10 +38,10 @@ With the right configuration scripts, it becomes really quick to set up Jenkins.
 
 # Jenkins Configuration as Code (JCasC)
 Configuring a Jenkins controller or agent can be a hassle, as there are many different plugins and many steps to configure before a Jenkins pipeline runs, things like:
-- installing plugins
-- checking out a code repository,
-- configuring users,
-- finally deploying the build. 
+- installing plugins,
+- checking out your code repositories,
+- configuring users and various credentials,
+- deploying the build.
 
 Now you could write Groovy scripts to directly invoke the Jenkins API for the desired configuration, but that requires advanced knowledge of the Jenkins API. For my case, investing in this kind of knowledge was simply not worth it. 
 
@@ -51,39 +51,61 @@ A good alternative is the Jenkins Configuration as Code [plugin](https://github.
 
 ```​​
 jenkins:
- systemMessage: "All configuration is done as code (JCasC) - please keep that in mind when changing any configuration in the Web UI"
- securityRealm:
-   local:
-     allowsSignup: false
-     users:
-     - id: "admin"
-       password: "myPassword"
-       properties:
-       - timezone:
-           timeZoneName: "Europe/Amsterdam"
- authorizationStrategy:
-   globalMatrix:
-     permissions:
+  systemMessage: "All configuration for this controller is done as code (JCasC)"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+      - id: "admin"
+        password: "${JENKINS_ADMIN_PASSWORD}" # passing ENV variable from Docker here
+        properties:
+        - timezone:
+            timeZoneName: "Europe/Amsterdam"
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+  remotingSecurity:
+    enabled: true
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+unclassified:
+  location:
+    url: http://localhost:8080
 ```
 
-This configuration file can then be checked into git, giving you an editing history of your configuration. Defining your configuration as code provides the same advantages Infrastructure as Code does, for example:
-Auditability: All configuration is explicit and can thus be checked for e.g. security concerns.
-Repeatability: The instance can be easily redeployed, duplicated, version controlled.
-[The list goes on](https://techspire.nl/why-infrastructure-as-code/)...
+This configuration file can then be checked into git, giving you an editing history of your configuration. Defining your configuration as code provides the same advantages Infrastructure as Code does. One aspect is auditability, because all configuration is explicit and can thus be checked for e.g. security concerns. Another aspects is repeatability, because the instance can be easily redeployed, duplicated and version controlled. [The list goes on](https://techspire.nl/why-infrastructure-as-code/)...
 
-With a first configuration file, it is time to prepare a Docker container with a customized Jenkins instance.
-Automating Jenkins configuration with Docker and JCasC
-For this step you’ll need to have Docker installed and tested, for example with some of the examples from the Docker tutorials. Make sure to start Docker’s UI, or the docker-daemon from your command line. To run a customized Jenkins container with Docker, I’ll take you through the following steps:
-Pull the latest Jenkins image with Docke
-Create a Dockerfile to define the configuration of the Jenkins container
-Build the Jenkins container
-Run the Jenkins container locally
+With a first configuration file ready, it is time to prepare a Docker container with a customized Jenkins instance.
 
-Finally, you might want to run the Jenkins container on e.g. Azure, AWS or GCP, but that 
+## Automating Jenkins configuration with Docker and JCasC
+For this step you’ll need to have Docker installed and tested. If you are new to Docker, your could start with the examples from the Docker tutorials. To run a customized Jenkins container with Docker, with the Configuration as Code plugin:
 
+1. Create a Dockerfile to define the configuration of the Jenkins container
+2. List the necessary plugins for Jenkins
+3. Pull & Build the latest Jenkins image with Docker
+4. Run the Jenkins container locally, passing the right parameters
 
+Once the Jenkins instance is running successfully locally, you might want to run the Jenkins container on e.g. Azure, AWS or GCP - but that's another story.
+
+### Step 1: Create a Dockerfile 
+For creation of the container, there are a couple steps. 
+```zsh
+FROM jenkins/jenkins:latest
+ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+ENV CASC_JENKINS_CONFIG /var/jenkins.yaml
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+COPY controller-configuration.yaml /var/jenkins.yaml
+```
+
+```zsh
 docker pull jenkins/jenkins:latest
-
+```
 Alternatively, choose to download a Jenkins LTS release. https://www.jenkins.io/download/lts/
 
 2:
@@ -97,7 +119,7 @@ Set some environment variables for the configuration of Jenkins
 Copy a list of plugins to install into the Jenkins container
 Run the built-in script that install the plugins from our list
 
-
+Make sure to start Docker’s UI, or the docker-daemon from your command line. 
 
 Now 
 Explain:
