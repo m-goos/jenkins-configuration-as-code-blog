@@ -86,17 +86,13 @@ With a first configuration file ready, it is time to prepare a Docker container 
 For this step you’ll need to have Docker installed and tested. If you are new to Docker, you could start with the examples from the Docker tutorials. The goal is to run a customized Jenkins container with Docker, with the Configuration as Code plugin,  automatically set up and ready to go. This is an overview of the steps to take, detailed below:
 
 Create a new folder for the following 3 files:
-1. `Dockerfile`: Create a Dockerfile to define the configuration of the Jenkins container
+1. `Dockerfile`: Create a Dockerfile to define the configuration of the Jenkins container.
 2. `plugins.txt`: List the necessary plugins for Jenkins in this file.
 3. `jenkins-configuration.yaml`: copy the code snippet above, or write your own.
+4. Pull, Build & Run the custom Jenkins container!
 
 ![folder-with-3-files](images/folder-3-files.png)
 *Contents of the new folder*
-
-Once this is set up, the final steps are:
-
-4. Pull & Build the latest Jenkins image with Docker
-5. Run the Jenkins container locally, passing the necessary parameters.
 
 Once the Jenkins instance is running successfully locally, you might want to run the Jenkins container on e.g. Azure, AWS or GCP - but that's another story.
 
@@ -124,48 +120,7 @@ The order here is crucial, because the plugins cannot be automatically installed
 The `copy` step with the plugins.txt, make sure to include the configuration as code plugin.
 
 ### Step 2: List the necessary plugins
-Create a file `plugins.txt` in the folder 
-### Step 3: 
-```zsh
-docker pull jenkins/jenkins:latest
-```
-Alternatively, choose to download a Jenkins LTS release. https://www.jenkins.io/download/lts/
-
-2:
-
-
-Below are all the commands outlined
-
-0w1We’ll take the following steps:
-Download the latest official Jenkins Docker image
-Set some environment variables for the configuration of Jenkins
-Copy a list of plugins to install into the Jenkins container
-Run the built-in script that install the plugins from our list
-
-Make sure to start Docker’s UI, or the docker-daemon from your command line. 
-
-Now 
-Explain:
-Get the latest Jenkins image,
-Set ENV variables for Jenkins to find the its way
-Copy in a plugins file
-Install the plugins
-Now the configuration as code plugin is ready, so: copy in the configuration and apply it
-
-Dockerfile: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
- 
-FROM jenkins/jenkins:latest
-ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
-ENV CASC_JENKINS_CONFIG /var/casc.yaml
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
-COPY controller-configuration.yaml /var/casc.yaml
-
- The following list is sourced and adapted to my needs from the [Jenkins Github repository](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/resources/jenkins/install/platform-plugins.json). 
-
-https://github.com/jenkinsci/docker#preinstalling-plugins
-
-Also include the `job-dsl` plugin, as we will need it in the next step of this blog:
+Create a file `plugins.txt` in the folder, with for example the following plugins:
 
 ```
 ant:latest
@@ -190,4 +145,34 @@ timestamper:latest
 workflow-aggregator:latest
 ws-cleanup:latest
 ```
-For production, you might want to add a specific version, not ‘latest’, to ensure stability when rebuilding your Jenkins image.
+
+The list is sourced and adapted to basic needs from the [Jenkins Github repository](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/resources/jenkins/install/platform-plugins.json). Have a peak there to make sure you include the plugins you need - for now this will suffice. The `job-dsl` plugin is included here as it will be necessary for the next blog in this series. 
+
+As a final remark: For production, you might want to specify a version for every plugin, not ‘latest’, to ensure stability when rebuilding your Jenkins image. The plugins are then installed with this command from the Dockerfile: `RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt` ([details](https://github.com/jenkinsci/docker#preinstalling-plugins)).
+
+-------
+**From here on down: to be edited. Biggest to do: very code examples.**
+### Step 3: Create configuration file
+A very basic configuration file provided
+
+### Step 4: Pull, Build & Run custom Jenkins image
+Make sure to start Docker’s UI, or the docker-daemon from your command line. 
+
+Dockerfile: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+
+```zsh
+docker pull jenkins/jenkins:latest
+```
+Alternatively, choose to download a Jenkins LTS release. https://www.jenkins.io/download/lts/
+
+
+```
+docker build -t jenkins:jcasc-blog-1 .
+docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
+```
+
+## Final thoughts
+- this is a very simple example
+- valuable resources
+- this is only the beginning of course, the cool automation happens when also all jobs are set up automatically. This is what I'll show in the next blog in this series.
+- will also show specifying credentials and logging into bitbucket or github using SSH.
