@@ -9,7 +9,7 @@ Now imagine configuring all of your infrastructure *as code*, but configuring th
 1. (Blog 2) Why I did not get the ‘perfect’ setup running yet..
 1. (Blog 3) Passing secrets to your Jenkins container from AWS ECS
 
-While I went through this setup for a Jenkins controller, I did not find everything to be as clear or well-documented as I would have wished. Hopefully this article will clear some things up! *[Find the repository here]()*
+While I went through this setup for a Jenkins controller, I did not find everything to be as clear or well-documented as I would have wished. Hopefully this article will clear some things up! *[Find the code repository here](https://github.com/m-goos/jenkins-configuration-as-code-blog)*, in the `Blog 1` folder.
 
 ![Stairs](images/stairs.jpg)
 
@@ -47,7 +47,7 @@ Now you could write Groovy scripts to directly invoke the Jenkins API for the de
 
 A good alternative is the Jenkins Configuration as Code [plugin](https://github.com/jenkinsci/configuration-as-code-plugin), JCasC for short. The JCasC plugin allows the user to define all the configuration options for the Jenkins instance as code, in a `yaml` file. That configuration file would then look something like this:
 
-`jenkins-configuration.yaml`:
+`jenkins-configuration.yaml` ([github](https://github.com/m-goos/jenkins-configuration-as-code-blog/blob/main/blog1-code/jenkins-configuration.yaml)):
 
 ```​​
 jenkins:
@@ -83,26 +83,49 @@ This configuration file can then be checked into git, giving you an editing hist
 With a first configuration file ready, it is time to prepare a Docker container with a customized Jenkins instance.
 
 ## Automating Jenkins configuration with Docker and JCasC
-For this step you’ll need to have Docker installed and tested. If you are new to Docker, your could start with the examples from the Docker tutorials. To run a customized Jenkins container with Docker, with the Configuration as Code plugin:
+For this step you’ll need to have Docker installed and tested. If you are new to Docker, you could start with the examples from the Docker tutorials. The goal is to run a customized Jenkins container with Docker, with the Configuration as Code plugin,  automatically set up and ready to go. This is an overview of the steps to take, detailed below:
 
-1. Create a Dockerfile to define the configuration of the Jenkins container
-2. List the necessary plugins for Jenkins
-3. Pull & Build the latest Jenkins image with Docker
-4. Run the Jenkins container locally, passing the right parameters
+Create a new folder for the following 3 files:
+1. `Dockerfile`: Create a Dockerfile to define the configuration of the Jenkins container
+2. `plugins.txt`: List the necessary plugins for Jenkins in this file.
+3. `jenkins-configuration.yaml`: copy the code snippet above, or write your own.
+
+![folder-with-3-files](images/folder-3-files.png)
+*Contents of the new folder*
+
+Once this is set up, the final steps are:
+
+4. Pull & Build the latest Jenkins image with Docker
+5. Run the Jenkins container locally, passing the necessary parameters.
 
 Once the Jenkins instance is running successfully locally, you might want to run the Jenkins container on e.g. Azure, AWS or GCP - but that's another story.
 
 ### Step 1: Create a Dockerfile 
-For creation of the container, there are a couple steps. 
+For creation of the container, there are a couple steps. Looking at the Dockerfile below line by line, you:
+1. `FROM`: Specify the Docker image to build, from the latest Jenkins image on your local machine
+2.`ENV` Set the environment variable that determines whether the Jenkins setup wizard will be run to false. This is not necessary, because the configuration comes from the `jenkins-configuration.yaml` script.
+3. `ENV` Set the environment variable that tells the Jenkins Configuration as Code plugin where to find its configuration.
+6. `COPY` the configuration file into the container
+4. `COPY` a list of `plugins` from the local machine into the container.
+5. `RUN` the script that installs the necessary plugins, such as the `Configuration as Code` plugin!
+
+**Dockerfile** ([github](https://github.com/m-goos/jenkins-configuration-as-code-blog/blob/main/blog1-code/Dockerfile)):
 ```zsh
 FROM jenkins/jenkins:latest
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 ENV CASC_JENKINS_CONFIG /var/jenkins.yaml
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
-COPY controller-configuration.yaml /var/jenkins.yaml
+COPY jenkins-configuration.yaml /var/jenkins.yaml
 ```
 
+The order here is crucial, because the plugins cannot be automatically installed before a list of required plugins is into the container.
+
+The `copy` step with the plugins.txt, make sure to include the configuration as code plugin.
+
+### Step 2: List the necessary plugins
+Create a file `plugins.txt` in the folder 
+### Step 3: 
 ```zsh
 docker pull jenkins/jenkins:latest
 ```
@@ -113,7 +136,7 @@ Alternatively, choose to download a Jenkins LTS release. https://www.jenkins.io/
 
 Below are all the commands outlined
 
-We’ll take the following steps:
+0w1We’ll take the following steps:
 Download the latest official Jenkins Docker image
 Set some environment variables for the configuration of Jenkins
 Copy a list of plugins to install into the Jenkins container
@@ -138,9 +161,7 @@ COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 COPY controller-configuration.yaml /var/casc.yaml
 
-The order here is crucial 
-
-The `copy` step with the plugins.txt, make sure to include the configuration as code plugin. The following list is sourced and adapted to my needs from the [Jenkins Github repository](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/resources/jenkins/install/platform-plugins.json). 
+ The following list is sourced and adapted to my needs from the [Jenkins Github repository](https://github.com/jenkinsci/jenkins/blob/master/core/src/main/resources/jenkins/install/platform-plugins.json). 
 
 https://github.com/jenkinsci/docker#preinstalling-plugins
 

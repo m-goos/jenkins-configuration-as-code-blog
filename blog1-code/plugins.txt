@@ -1,0 +1,22 @@
+ant:latest
+antisamy-markup-formatter:latest
+authorize-project:latest
+build-timeout:latest
+cloudbees-folder:latest
+configuration-as-code:latest
+credentials:latest
+email-ext:latest
+git:latest
+gradle:latest
+job-dsl:latest
+ldap:latest
+mailer:latest
+matrix-auth:latest
+nodejs:latest
+pam-auth:latest
+pipeline-stage-view:latest
+ssh-slaves:latest
+timestamper:latest
+workflow-aggregator:latest
+ws-cleanup:latest
+# mainly sourced from https://github.com/jenkinsci/jenkins/blob/master/core/src/main/resources/jenkins/install/platform-plugins.json
