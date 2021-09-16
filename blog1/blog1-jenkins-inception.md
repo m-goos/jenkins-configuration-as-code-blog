@@ -205,6 +205,7 @@ jenkins/jenkins   latest         482543872bd9   6 days ago      441MB
 After successfully building, it is time to run the image. The `docker run` command gets the following options:
 - [OPTION] `--name` to name the image
 - [OPTION] `--rm` to automatically remove the container when it exits
+- [OPTION] `-d` to start a container in detached mode
 - [OPTION] `-p` to publish or expose port
 - [OPTION] `--env` to pass an Environment Variable
 - [IMAGE] the image to run
@@ -212,7 +213,13 @@ After successfully building, it is time to run the image. The `docker run` comma
 $ docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
 ```
 
-Wait a second, and this should be successful! You should see something like this: `$ Jenkins is fully up and running`. Finally, to clean up, stop the process of the running container using `ctrl + c` and remove the docker image you built:
+Wait a second, and this should be successful! If you would inspect your container (`docker exec`), you should see something like this: `$ Jenkins is fully up and running`. Go to `http://localhost:8080`, login with username admin and `password` as password and enjoy!
+
+
+
+![succesfully-finished-jenkins](images/success.png)
+
+Finally, to clean up, stop the process of the running container using `ctrl + c` and remove the docker image you built:
 ```zsh
 $ docker images
 REPOSITORY        TAG            IMAGE ID       CREATED          SIZE
@@ -231,15 +238,17 @@ Deleted: sha256:482543872bd95ba0a4...
 ## Final thoughts
 The code in this blog is a very simple example, but that is the point: To get started with Jenkins Configuration as Code. It provides a jumping board to get you started, so please feel free to play around with this setup as well! It is pretty amazing when you can simply spin up a fully configured Jenkins container like this. 
 
-A next cool step would be to take this container to the cloud, for example to upload your image the AWS Elastic Container Registry, and then to run it using the AWS container service (ECS/Fargate). There are some big steps there, such as exposing that container to the internet and setting up all network resources, but that all be done as code as well.
+A step towards running Jenkins in production would be to take this container to the cloud, for example to upload your image the AWS Elastic Container Registry, and then to run it using the AWS container service (ECS/Fargate). There are some big steps there, such as setting up all network resources and exposing that container to the internet, but all that can be done as code as well.
 
 Some of the most valuable resources for me are the Configuration as Code repository and the blog of [Tom Gregory](https://tomgregory.com/jenkins-tutorials/).
 
-Another great step is when all the necessary pipeline jobs are set up automatically. This is what I'll show in the next blog in this series. I'll show how to specify credentials to a git repository that holds the pipeline scripts to automate this setup, and how to use the `Job DSL plugin` to.. well, to automate the automation ;) 
+
+## Next level: automating job setup
+A very useful and cool step is when all the necessary pipeline jobs are set up automatically. This is what I'll show in the next blog in this series. I'll show how to specify credentials to a git repository that holds the pipeline scripts to automate this setup, and how to use the `Job DSL plugin` to.. well, to automate the automation 
 
 I hope you enjoyed this blog and have a good use case for this awesome Jenkins plugin with its features - please feel free to reach out with any feedback you have.
 
-### Who am I?
+## Who am I?
 I’m Marc, a full stack engineer at Techspire and I ride my bike in Amsterdam 🇳🇱 I have an engineering bachelor’s, an entrepreneurship master’s and when I am not coding, I am probably doing water sports.
 
 Do you think you have what it takes to work with us? At Techspire we’re looking for people who love technology as much as we do, looking to push themselves to expand their knowledge. Also, we love a good story, a good laugh, and a few beers.
