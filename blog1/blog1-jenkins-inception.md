@@ -16,7 +16,7 @@ While I went through this setup for a Jenkins controller, I did not find everyth
 
 *Prerequisites: some basic experience with Docker and Jenkins, see [Jenkins Tutorials](https://www.jenkins.io/doc/tutorials/) and [Docker getting started](https://docs.docker.com/get-started/). You can choose to code along with this blog, or to simply pull the repository. All final files are supplied in the `blog1-code` folder.*
 
-# Why a build server, and why Jenkins?
+# Why a build server and why Jenkins?
 The reason to set up a CI/CD pipeline is simple: to automate deployment of your projects, and to standardize your process of deploying to production, configured to your needs. Here’s a little example I drew in *excalidraw*:
 
 ![jenkins-usecase](images/jenkins-usecase.png)
@@ -161,7 +161,7 @@ $ docker ps
 
 This should list any images you have, or currently running containers. Next, pull the latest Jenkins image:
 ```zsh
-docker pull jenkins/jenkins:latest
+$ docker pull jenkins/jenkins:latest
 ```
 Alternatively, you could choose to download a Jenkins Long Term Support or LTS release, for example for stabilization. But let's not get into that for this blog.
 
@@ -210,6 +210,22 @@ After successfully building, it is time to run the image. The `docker run` comma
 $ docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
 ```
 
+Wait a second, and this should be successful! You should see something like this: `$ Jenkins is fully up and running`. Finally, to clean up, stop the process of the running container using `ctrl + c` and remove the docker image you built:
+```zsh
+$ docker images
+REPOSITORY        TAG            IMAGE ID       CREATED          SIZE
+jenkins           jcasc-blog-1   af23bd83c660   36 minutes ago   517MB
+jenkins/jenkins   latest         482543872bd9   6 days ago       441MB
+
+# remove images
+# docker rmi [OPTIONS] IMAGE [IMAGE...]
+$ docker rmi af23bd83c660 482543872bd9
+Untagged: jenkins:jcasc-blog-1
+Deleted: sha256:af23bd83c660cf50f4...
+Untagged: jenkins/jenkins:latest
+Untagged: jenkins/jenkins@sha256:0...
+Deleted: sha256:482543872bd95ba0a4...
+```
 ## Final thoughts
 The code in this blog is a very simple example, but that is the point: To get started with Jenkins Configuration as Code. It provides a jumping board to get you started, so please feel free to play around with this setup as well! It is pretty amazing when you can simply spin up a fully configured Jenkins container like this. 
 
