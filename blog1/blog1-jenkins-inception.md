@@ -211,7 +211,17 @@ $ docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=passw
 ```
 
 ## Final thoughts
-- this is a very simple example
-- valuable resources
-- this is only the beginning of course, the cool automation happens when also all jobs are set up automatically. This is what I'll show in the next blog in this series.
-- will also show specifying credentials and logging into bitbucket or github using SSH.
+The code in this blog is a very simple example, but that is the point: To get started with Jenkins Configuration as Code. It provides a jumping board to get you started, so please feel free to play around with this setup as well! It is pretty amazing when you can simply spin up a fully configured Jenkins container like this. 
+
+A next cool step would be to take this container to the cloud, for example to upload your image the AWS Elastic Container Registry, and then to run it using the AWS container service (ECS/Fargate). There are some big steps there, such as exposing that container to the internet and setting up all network resources, but that all be done as code as well.
+
+Some of the most valuable resources for me are the Configuration as Code repository and the blog of [Tom Gregory](https://tomgregory.com/jenkins-tutorials/).
+
+Another great step is when all the necessary pipeline jobs are set up automatically. This is what I'll show in the next blog in this series. I'll show how to specify credentials to a git repository that holds the pipeline scripts to automate this setup, and how to use the `Job DSL plugin` to.. well, to automate the automation ;) 
+
+I hope you enjoyed this blog and have a good use case for this awesome Jenkins plugin with its features - please feel free to reach out with any feedback you have.
+
+### Who am I?
+I’m Marc, a full stack engineer at Techspire and I ride my bike in Amsterdam 🇳🇱 I have an engineering bachelor’s, an entrepreneurship master’s and when I am not coding, I am probably doing water sports.
+
+Do you think you have what it takes to work with us? At Techspire we’re looking for people who love technology as much as we do, looking to push themselves to expand their knowledge. Also, we love a good story, a good laugh, and a few beers.
