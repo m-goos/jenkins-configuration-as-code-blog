@@ -2,12 +2,11 @@
 Jenkins is an open source automation server that development teams use to build, test and deploy their applications. If you have worked in an environment with CI/CD pipelines, chances are that you have used Jenkins. And because Jenkins has so many configuration options and plugins available, it can be quite an effort to set up.
 
 Now imagine configuring all of your infrastructure *as code*, but configuring the tool that builds, tests and deploys your infrastructure and applications *through a web UI*. Sounds counterintuitive, right? In this blog, I’ll show you how to configure Jenkins as code. The next blog in this series, I’ll talk about even setting up your pipeline configuration in a fully automated, version controlled way. If you already know why you use Jenkins, you can skip the first paragraph:
-1. (Blog 1) Why a build server, and why Jenkins?
-1. (Blog 1) Jenkins: Configuration as Code (JCasC) plugin
-1. (Blog 1) Automating Jenkins configuration with Docker and JCasC
-1. (Blog 2) Automating pipeline setup: Jenkins Job DSL plugin
-1. (Blog 2) Why I did not get the ‘perfect’ setup running yet..
-1. (Blog 3) Passing secrets to your Jenkins container from AWS ECS
+1. (Blog 1/2) Why a build server, and why Jenkins?
+1. (Blog 1/2) Jenkins: Configuration as Code (JCasC) plugin
+1. (Blog 1/2) Automating Jenkins configuration with Docker and JCasC
+1. (Blog 2/2) Automating pipeline setup: Jenkins Job DSL plugin
+1. (Blog 2/2) Why I did not get the ‘perfect’ setup running yet..
 
 While I went through this setup for a Jenkins controller, I did not find everything to be as clear or well-documented as I would have wished. Hopefully this article will clear some things up! *[Find the code repository here](https://github.com/m-goos/jenkins-configuration-as-code-blog)*, in the `Blog 1` folder.
 
@@ -15,7 +14,7 @@ While I went through this setup for a Jenkins controller, I did not find everyth
 
 *How deep do you want to go down the Configuration as Code rabbit hole? [Maxime Lebrun](https://unsplash.com/photos/1o2071GOVp0) on Unsplash*
 
-*Prerequisites: some basic experience with Docker and Jenkins, see [Jenkins Tutorials](https://www.jenkins.io/doc/tutorials/) and [Docker getting started](https://docs.docker.com/get-started/).*
+*Prerequisites: some basic experience with Docker and Jenkins, see [Jenkins Tutorials](https://www.jenkins.io/doc/tutorials/) and [Docker getting started](https://docs.docker.com/get-started/). You can choose to code along with this blog, or to simply pull the repository. All final files are supplied in the `blog1-code` folder.*
 
 # Why a build server, and why Jenkins?
 The reason to set up a CI/CD pipeline is simple: to automate deployment of your projects, and to standardize your process of deploying to production, configured to your needs. Here’s a little example I drew in *excalidraw*:
@@ -150,25 +149,65 @@ The list is sourced and adapted to basic needs from the [Jenkins Github reposito
 
 As a final remark: For production, you might want to specify a version for every plugin, not ‘latest’, to ensure stability when rebuilding your Jenkins image. The plugins are then installed with this command from the Dockerfile: `RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt` ([details](https://github.com/jenkinsci/docker#preinstalling-plugins)).
 
--------
-**From here on down: to be edited. Biggest to do: very code examples.**
 ### Step 3: Create configuration file
-A very basic configuration file provided
+A very basic configuration file would be as provided in this blog, scroll up to copy from `jenkins-configuration.yaml`. Now create that file in your root folder, or feel free to experiment with a more elaborate configuration file from the [JCasC repository](https://github.com/jenkinsci/configuration-as-code-plugin#introduction).
 
 ### Step 4: Pull, Build & Run custom Jenkins image
-Make sure to start Docker’s UI, or the docker-daemon from your command line. 
+Start Docker's UI or the docker-daemon from your command line. To check if docker is running, in your command line try something like this:
+```zsh
+$ docker images
+$ docker ps
+```
 
-Dockerfile: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
-
+This should list any images you have, or currently running containers. Next, pull the latest Jenkins image:
 ```zsh
 docker pull jenkins/jenkins:latest
 ```
-Alternatively, choose to download a Jenkins LTS release. https://www.jenkins.io/download/lts/
+Alternatively, you could choose to download a Jenkins Long Term Support or LTS release, for example for stabilization. But let's not get into that for this blog.
 
+Next, make sure your terminal is in the folder you have been creating the necessary files for, and then we are at the final step: to build and run the docker image!
+
+The `docker build` command gets the following options:
+- [OPTION] `-t` to tag the images
+- [PATH] `.` to build from the Dockerfile from the current directory
 
 ```
-docker build -t jenkins:jcasc-blog-1 .
-docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
+$ pwd 
+/Users/marc/projects/jenkins-configuration-as-code-blog/blog1-code
+
+$ docker build -t jenkins:jcasc-blog-1 .
+
+[+] Building 36.3s (9/9) FINISHED                                                                      
+ => [internal] load build definition from Dockerfile
+ => => transferring dockerfile: 343B
+ => [internal] load .dockerignore
+ => => transferring context: 2B
+ => [internal] load metadata for docker.io/jenkins/jenkins:latest
+ => CACHED [1/4] FROM docker.io/jenkins/jenkins:latest
+ => [internal] load build context
+ => => transferring context: 791B
+ => [2/4] COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+ => [3/4] RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+ => [4/4] COPY jenkins-configuration.yaml /var/jenkins.yaml
+ => exporting to image
+ => => exporting layers
+ => => writing image sha256:af23bd83c660cf50f4dd09c3badd9850c75f1e9e51bc882f1ca6f5116b8ddd02
+ => => naming to docker.io/library/jenkins:jcasc-blog-1
+
+$ docker images
+REPOSITORY        TAG            IMAGE ID       CREATED         SIZE
+jenkins           jcasc-blog-1   af23bd83c660   3 minutes ago   517MB
+jenkins/jenkins   latest         482543872bd9   6 days ago      441MB
+```
+
+After successfully building, it is time to run the image. The `docker run` command gets the following options:
+- [OPTION] `--name` to name the image
+- [OPTION] `--rm` to automatically remove the container when it exits
+- [OPTION] `-p` to publish or expose port
+- [OPTION] `--env` to pass an Environment Variable
+- [IMAGE] the image to run
+```
+$ docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
 ```
 
 ## Final thoughts
