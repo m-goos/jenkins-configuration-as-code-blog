@@ -213,13 +213,13 @@ After successfully building, it is time to run the image. The `docker run` comma
 $ docker run --name jenkins --rm -p 8080:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jcasc-blog-1
 ```
 
-Wait a second, and this should be successful! If you would inspect your container (`docker exec`), you should see something like this: `$ Jenkins is fully up and running`. Go to `http://localhost:8080`, login with username admin and `password` as password and enjoy!
+Give Jenkins a minute or so, and this should be successful! If you would inspect your container (`docker exec`), you should see something like this: `$ Jenkins is fully up and running`. Go to `http://localhost:8080`, login with username admin and `password` as password and enjoy!
 
 
 
 ![succesfully-finished-jenkins](images/success.png)
 
-Finally, to clean up, stop the process of the running container using `ctrl + c` and remove the docker image you built:
+Finally, to clean up, stop the process of the running container using `ctrl + c` or `docker stop [CONTAINER ID]` when running in `detached` mode and remove the docker image you built:
 ```zsh
 $ docker images
 REPOSITORY        TAG            IMAGE ID       CREATED          SIZE
