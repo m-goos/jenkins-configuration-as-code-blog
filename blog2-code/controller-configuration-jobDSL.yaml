@@ -5,7 +5,7 @@ jenkins:
       allowsSignup: false
       users:
       - id: "admin"
-        password: "adminPass"
+        password: "${JENKINS_ADMIN_PASSWORD}" # passing ENV variable from Docker here
         properties:
         - timezone:
             timeZoneName: "Europe/Amsterdam"
@@ -23,7 +23,7 @@ security:
         strategy: triggeringUsersAuthorizationStrategy
 unclassified:
   location:
-    url: http://localhost:8080
+    url: http://localhost:80
 tool:
   nodejs:
     installations:
@@ -37,14 +37,13 @@ tool:
                     npmPackagesRefreshHours: 48
 jobs:
     - script: >
-        pipelineJob("initialize-pipelines") {
+        pipelineJob("Seed or update all pipelines") {
         definition {
             cpsScm {
                 scm {
                     git{
                       remote {
-                        url("git@bitbucket.org:myrepo/myrepo_seed-jobs.git")
-                        credentials('jenkins-bitbucket-ssh')
+                        url("https://github.com/m-goos/jenkins-jobdsl-seedrepo-example.git")
                       }
                       branch("*/main")
                     }
@@ -52,21 +51,16 @@ jobs:
             }
           }
         }
-    # jobDsl queue is a bit flaky and runs into a chicken-egg problem with Jenkins startup and queueing.
-    # see https://github.com/jenkinsci/configuration-as-code-plugin/issues/280
-    # see also https://github.com/jenkinsci/configuration-as-code-plugin/issues/619
-    # - script: queue("initialize-pipelines")
-
 credentials:
   system:
     domainCredentials:
       - credentials:
           - basicSSHUserPrivateKey:
               scope: GLOBAL
-              id: jenkins-bitbucket-ssh
+              id: jenkins-github-ssh
               username: jenkins-container
               passphrase: "jenkinsPass"
-              description: "Jenkins SSH Key for Bitbucket"
+              description: "Jenkins SSH Key for github"
               privateKeySource:
                 directEntry:
-                  privateKey: "privateKey"
+                  privateKey: "privateKey-maybe-from-environment-variable"
