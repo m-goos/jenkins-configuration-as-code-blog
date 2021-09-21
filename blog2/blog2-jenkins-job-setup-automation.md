@@ -6,7 +6,7 @@ Jenkins is an automation server used by development teams for CI/CD processes. I
 ## Goal of this blog
 The goal of this blog is that, once you start your Jenkins container, you can just press play to let Jenkins set up the necessary jobs. These jobs are checked into a code repository and that has a ton of benefits. The configuration can be audited and easily replicated if the Jenkins server goes down or has to be migrated for some reason. Changes in job configuration can then be deployed *through* a pipeline and all the replicative work of setting up pipelines is automated. A high-level overview of the setup looks like this:
 
-![jenkins](images/flow-2.png)
+![jenkins](images/flow-3.png)
 
 ## Contents
 1. Getting started: test your setup (Docker)
