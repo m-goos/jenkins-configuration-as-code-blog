@@ -12,7 +12,8 @@ The goal of this blog is that, once you start your Jenkins container, you can ju
 1. Getting started: test your setup (Docker)
 2. Seed job included in Configuration as Code setup (JCasC/JobDSL)
 3. Create seed job repository (Jenkinsfile/JobDSL)
-4. Results: 
+4. Result: Jenkins is populated with jobs by running the seed job
+5. Why the initial job needs to be started manually
 
 ## 1. Getting started: test your setup (Docker)
 This blog builds on the concept of the `Jenkins Configuration as Code` plugin and it requires some basic proficiency with Docker. Although this blog can be read independent from my previous Jenkins blog, you might want to [have a look](https://techspire.nl/jenkins-inception-configuring-jenkins-to-configure-jenkins/) there if this concept new for you. I use `zsh` on a mac, so you might have to adjust some of the terminal code snippets if you're on a different platform.
@@ -71,7 +72,7 @@ Now navigate to `http://localhost`, login with the following credentials:
 
 And find Jenkins waiting for you with a pre-configured pipeline!
 
-> If you run this pipeline, your Jenkins server will be populated with a bunch of different pipeline jobs, straight from github!
+> If you run this seed pipeline, your Jenkins server will be populated with pipeline jobs you defined as code, straight from github!
 
 ![jenkins-seeded](images/jenkins-seeded.png)
 
@@ -105,29 +106,88 @@ jobs:
 
 The result is the screenshot above. Find this snippet in the folder `blog2-code` in the `controller-configuration.yaml` file, to see how it fits in the configuration file.
 
-As you might notice, no ssh credentials were used to simplify this example. In a production example you would of course use SSH keys to check out a repository. For that, add a `credentials` block below the url that points to git ([see documentation for](https://jenkinsci.github.io/job-dsl-plugin/#method/javaposse.jobdsl.dsl.helpers.workflow.CpsScmContext.scm) `scm > git > remote > credentials`). There you can specify the credentials with as they have been defined in Jenkins.
+No ssh credentials were used to simplify this example. In a production example you would use SSH keys to check out a repository. For that, add a `credentials` block below the url that points to git ([see documentation for](https://jenkinsci.github.io/job-dsl-plugin/#method/javaposse.jobdsl.dsl.helpers.workflow.CpsScmContext.scm) `scm > git > remote > credentials`). There you can specify the credentials as they have been defined in Jenkins.
 
 
 ----
 **TO BE FINALIZED FROM HERE ON:**
 ## 3. Create seed job repository (Jenkinsfile/JobDSL)
-- created a seed job repo
-- show syntax and how it stitches together a bunch of groovy files
-- show screenshot of succesfull run of seed job-1 and seed job -2
+With the seed job added to the configuration file of the controller, the next step is to create a repository that holds the seed jobs. For this blog I created a public repository that holds a Jenkinsfile and two `seed.groovy` files. The seed repository looks like this:
+```
+jenkins-jobdsl-seedrepo-example
 
-![seed-1-ran](images/seed1.png)
+ ┣ Jenkinsfile
+ ┣ README.md
+ ┣ seed1.groovy
+ ┗ seed2.groovy
+```
 
-**EVT NOG INSPIRATIE HALEN UIT DE ANDERE DOCUMENTATIE DIE IK GESCHREVEN HEB**
+When `Seed or update all pipelines` is run, it generates a job for every `.groovy` file in the specified path. 
 
+`Jenkinsfile:`
+```
+pipeline {
+    agent any 
+    stages {
+        stage('Pipeline to seed or update all pipelines') {
+            steps {
+                jobDsl  targets: ['*.groovy'].join('\n')
+            }
+        }
+    }
+}
+```
 
-## Why I haven't realized a 'fully' automated setup
-Ideally, the seed job would be run 
+Have a look at the JobDSL [wiki](https://github.com/jenkinsci/job-dsl-plugin/wiki/User-Power-Moves#use-job-dsl-in-pipeline-scripts) for the configuration options and to understand the behavior of the plugin. For example, `ignoreExisting` defaults to false, so existing jobs and views will be updated when the seed pipeline is re-run. 
 
-jobDsl queue is a bit flaky and runs into a chicken-egg problem with Jenkins startup and queueing.
-see https://github.com/jenkinsci/configuration-as-code-plugin/issues/280
-see also https://github.com/jenkinsci/configuration-as-code-plugin/issues/619
-- script: queue("initialize-pipelines")
+## 4. Result: Jenkins is populated with jobs by running the seed job
+Finally, it is time to run the seed job. This is the job output:
 
-## Next steps
-- create credentials for external git repository
-- check out external git repository
+```
+Commit message: "add seed for seed-job-2"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Pipeline to seed or update all pipelines)
+[Pipeline] jobDsl
+Processing DSL script seed1.groovy
+Processing DSL script seed2.groovy
+Added items:
+    GeneratedJob{name='Seed job 1'}
+    GeneratedJob{name='Seed job 2'}
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS
+```
+
+Success! 🎉 After refreshing the homepage of the controller, it now has two extra jobs:
+
+![seed-1-ran](images/seed2.png)
+
+## 5. Why the initial job needs to be started manually
+Ideally, the seed job would be run once the controller is done starting up. That seemed simple enough, using jobDSL's queue command. The command can `queue` the seed job to be run once the controller is in its *ready* state, added below the declaration of our initial job:
+```sh
+# controller-configuration.yaml
+- script: queue("Seed or update all pipelines")
+```
+
+However, that runs into a chicken-and-egg problem between Jenkins starting up and queueing. The queue is cleared at some point when Jenkins is ready, . If that peaks your interest, have a look at these issues on github, describing the problen [[1](https://github.com/jenkinsci/configuration-as-code-plugin/issues/280)] [[2](https://github.com/jenkinsci/configuration-as-code-plugin/issues/199)] [[3](https://github.com/jenkinsci/configuration-as-code-plugin/issues/619)].
+
+## Next steps: secrets and private repositories
+A natural next step after this working prototype would be to start adding credentials to the Configuration as Code setup and to check out a private seed repository. The `controller-configuration-jobDSL.yaml` includes the setup for a credential, so that could be a good starting point. 
+
+In the production setup I use, Jenkins gets its credentials from the secrets storage solution from AWS - this can be done using a Jenkins plugin and there are different authentication options. Getting your credentials from within the cloud cannot be tested from your machine, as the container runs in the AWS container service, but you'll find the right steps outlined clearly on [Tom Gregory's](https://tomgregory.com/inject-secrets-from-aws-into-jenkins-pipelines/) blog and the [plugin page](https://github.com/jenkinsci/aws-secrets-manager-credentials-provider-plugin/).
+
+I hope you enjoyed this blog and have a good use case for this handy Jenkins plugin - please feel free to reach out with any feedback you have.
+
+## WHO AM I?
+I’m Marc, a full stack engineer at Techspire and I ride my bike in Amsterdam 🇳🇱 I have an engineering bachelor’s, an entrepreneurship master’s and when I am not coding, I am probably doing water sports.
+
+Do you think you have what it takes to work with us? At Techspire we’re looking for people who love technology as much as we do, looking to push themselves to expand their knowledge. Also, we love a good story, a good laugh, and a few beers.

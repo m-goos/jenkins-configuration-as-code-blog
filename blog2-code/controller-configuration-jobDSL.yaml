@@ -59,8 +59,8 @@ credentials:
               scope: GLOBAL
               id: jenkins-github-ssh
               username: jenkins
-              passphrase: "jenkinsPass"
+              passphrase: "mySSHpassphrase"
               description: "Jenkins SSH Key for github"
               privateKeySource:
                 directEntry:
-                  privateKey: "privateKey-maybe-from-environment-variable"
+                  privateKey: "privateKey-for-example-from-environment-variable"
