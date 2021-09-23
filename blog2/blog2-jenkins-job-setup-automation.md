@@ -16,7 +16,7 @@ The goal of this blog is that, once you start your Jenkins container, you can ju
 5. Why the initial job needs to be started manually
 
 ## 1. Getting started: test your setup (Docker)
-This blog builds on the concept of the `Jenkins Configuration as Code` plugin and it requires some basic proficiency with Docker. Although this blog can be read independent from my previous Jenkins blog, you might want to [have a look](https://techspire.nl/jenkins-inception-configuring-jenkins-to-configure-jenkins/) there if this concept new for you. I use `zsh` on a mac, so you might have to adjust some of the terminal code snippets if you're on a different platform.
+This blog builds on the concept of the `Jenkins Configuration as Code` plugin and it requires some basic proficiency with Docker. Although this blog can be read independent from my previous Jenkins blog, you might want to [have a look](https://techspire.nl/jenkins-inception-configuring-jenkins-to-configure-jenkins/) there if this concept new for you. I use `zsh` on a mac, so you might have to adjust some of the terminal code snippets if you are on a different platform.
 
 To get started, clone the following [repository](https://github.com/m-goos/jenkins-configuration-as-code-blog) and go to the `blog2-code` directory to follow along:
 ```zsh
@@ -29,7 +29,7 @@ controller-configuration-jobDSL.yaml
 plugins.txt
 ```
 
-Now let's do a quick check of your environment and setup. You should be able to run the following container that can be built from the `Blog2-code` directory:
+Now let us do a quick check of your environment and setup. You should be able to run the following container that can be built from the `Blog2-code` directory:
 ```sh
 # start Docker or the docker-daemon
 $ pwd
@@ -57,18 +57,19 @@ $ docker build -t jenkins:jobdsl-blog-2 .
  => => naming to docker.io/library/jenkins:jobdsl-blog-2
 ```
 
-Now finally run the Jenkins container, refer to [Blog 1](https://techspire.nl/jenkins-inception-configuring-jenkins-to-configure-jenkins/) in this series if you're looking for an explanation for the flags/options I'm using here:
+Now finally run the Jenkins container, refer to [Blog 1](https://techspire.nl/jenkins-inception-configuring-jenkins-to-configure-jenkins/) in this series if you are looking for an explanation for the flags/options I'm using here:
 ```
 $ docker images
 REPOSITORY        TAG             IMAGE ID       CREATED         SIZE
 jenkins           jobdsl-blog-2   d7cdd9f5ffda   9 minutes ago   517MB
 
-$ docker run --name jenkins --rm -p 80:8080 --env JENKINS_ADMIN_PASSWORD=password jenkins:jobdsl-blog-2
+$ docker run --name jenkins --rm -p 80:8080 -d --env JENKINS_ADMIN_PASSWORD=password jenkins:jobdsl-blog-2
 ```
 
 Now navigate to `http://localhost`, login with the following credentials:
 - admin: `admin`
 - password: `password`
+- *to stop this container when you are done: `docker stop [CONTAINER-ID]`*
 
 And find Jenkins waiting for you with a pre-configured pipeline!
 
@@ -76,7 +77,7 @@ And find Jenkins waiting for you with a pre-configured pipeline!
 
 ![jenkins-seeded](images/jenkins-seeded.png)
 
-How cool is that..!? Well, let's get to how this works.
+How cool is that..!? Well, let us get to how this works.
 
 ## 2. Seed job included in Configuration as Code setup (JCasC/JobDSL)
 After the Jenkins container started, a seed job was waiting. This seed job was defined in the `Configuration as Code` script for the controller. When running the `docker build` command, the configuration file is copied into the Jenkins container and used to configure Jenkins on the first startup. This configuration part is done using the Configuration as Code plugin - as I pointed out earlier, feel free to have a look at my previous blog for that 😉
@@ -172,18 +173,18 @@ Success! 🎉 After refreshing the homepage of the controller, it now has two ex
 ![seed-1-ran](images/seed2.png)
 
 ## 5. Why the initial job needs to be started manually
-Ideally, the seed job would be run once the controller is done starting up. That seemed simple enough, using jobDSL's queue command. The command can `queue` the seed job to be run once the controller is in its *ready* state, added below the declaration of our initial job:
+Ideally, the seed job would be run once the controller is done starting up. That seemed simple enough, using the jobDSL queue command. The command can `queue` the seed job to be run once the controller is in its *ready* state, added below the declaration of our initial job:
 ```sh
 # controller-configuration.yaml
 - script: queue("Seed or update all pipelines")
 ```
 
-However, that runs into a chicken-and-egg problem between Jenkins starting up and queueing. The queue is cleared at some point when Jenkins is ready, . If that peaks your interest, have a look at these issues on github, describing the problen [[1](https://github.com/jenkinsci/configuration-as-code-plugin/issues/280)] [[2](https://github.com/jenkinsci/configuration-as-code-plugin/issues/199)] [[3](https://github.com/jenkinsci/configuration-as-code-plugin/issues/619)].
+However, that runs into a chicken-and-egg problem between Jenkins starting up and queueing. The queue is cleared at some point when Jenkins is ready, by definition, but the queue should only be started after Jenkins is ready.. Get it? If that peaks your interest, have a look at these issues on github, describing the problen [[1](https://github.com/jenkinsci/configuration-as-code-plugin/issues/280)] [[2](https://github.com/jenkinsci/configuration-as-code-plugin/issues/199)] [[3](https://github.com/jenkinsci/configuration-as-code-plugin/issues/619)].
 
 ## Next steps: secrets and private repositories
 A natural next step after this working prototype would be to start adding credentials to the Configuration as Code setup and to check out a private seed repository. The `controller-configuration-jobDSL.yaml` includes the setup for a credential, so that could be a good starting point. 
 
-In the production setup I use, Jenkins gets its credentials from the secrets storage solution from AWS - this can be done using a Jenkins plugin and there are different authentication options. Getting your credentials from within the cloud cannot be tested from your machine, as the container runs in the AWS container service, but you'll find the right steps outlined clearly on [Tom Gregory's](https://tomgregory.com/inject-secrets-from-aws-into-jenkins-pipelines/) blog and the [plugin page](https://github.com/jenkinsci/aws-secrets-manager-credentials-provider-plugin/).
+In the production setup I use, Jenkins gets its credentials from the secrets storage solution from AWS - this can be done using a Jenkins plugin and there are different authentication options. Getting your credentials from within the cloud cannot be tested from your machine, as the container runs in the AWS container service, but you will find the right steps outlined clearly on the blog of [Tom Gregory](https://tomgregory.com/inject-secrets-from-aws-into-jenkins-pipelines/) and the [plugin page](https://github.com/jenkinsci/aws-secrets-manager-credentials-provider-plugin/).
 
 I hope you enjoyed this blog and have a good use case for this handy Jenkins plugin - please feel free to reach out with any feedback you have.
 
