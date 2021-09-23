@@ -24,17 +24,6 @@ security:
 unclassified:
   location:
     url: http://localhost:80
-tool:
-  nodejs:
-    installations:
-      - name: "node"
-        home: "" #required until nodejs-1.3.4 release (JENKINS-57508)
-        properties:
-          - installSource:
-              installers:
-                - nodeJSInstaller:
-                    id: "16.2.0"
-                    npmPackagesRefreshHours: 48
 jobs:
     - script: >
         pipelineJob("Seed or update all pipelines") {
